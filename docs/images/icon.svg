@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1c2140"/>
+      <stop offset="1" stop-color="#0b0d17"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.22" cy="0.2" r="0.7">
+      <stop offset="0" stop-color="#d97757" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#d97757" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2b3156"/>
+      <stop offset="1" stop-color="#20253f"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <rect width="1024" height="1024" fill="url(#glow)"/>
+
+  <!-- the prompt line: chevron, text already typed (dots), then a slash -->
+  <path d="M136 186 l 64 50 l -64 50" stroke="#d97757" stroke-width="30" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <circle cx="290" cy="236" r="20" fill="#aab2d9"/>
+  <circle cx="360" cy="236" r="20" fill="#aab2d9"/>
+  <circle cx="430" cy="236" r="20" fill="#aab2d9"/>
+  <path d="M556 166 L 506 306" stroke="#d97757" stroke-width="30" stroke-linecap="round" fill="none"/>
+  <rect x="590" y="182" width="16" height="108" rx="8" fill="#d97757" opacity="0.9"/>
+  <rect x="120" y="356" width="784" height="10" rx="5" fill="#59628f" opacity="0.6"/>
+
+  <!-- the menu: three rows, the first one highlighted -->
+  <rect x="120" y="416" width="784" height="132" rx="34" fill="#d97757" opacity="0.92"/>
+  <rect x="170" y="466" width="200" height="32" rx="16" fill="#1c2140"/>
+  <rect x="410" y="466" width="320" height="32" rx="16" fill="#1c2140" opacity="0.55"/>
+
+  <rect x="120" y="584" width="784" height="132" rx="34" fill="url(#bar)"/>
+  <rect x="170" y="634" width="240" height="32" rx="16" fill="#aab2d9"/>
+  <rect x="450" y="634" width="260" height="32" rx="16" fill="#59628f"/>
+
+  <rect x="120" y="752" width="784" height="132" rx="34" fill="url(#bar)"/>
+  <rect x="170" y="802" width="170" height="32" rx="16" fill="#aab2d9"/>
+  <rect x="380" y="802" width="300" height="32" rx="16" fill="#59628f"/>
+</svg>

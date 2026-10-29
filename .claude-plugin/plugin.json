@@ -1,0 +1,13 @@
+{
+  "name": "my-skills-anywhere",
+  "displayName": "Skills anywhere",
+  "version": "0.1.0",
+  "description": "Suggests your own skills and commands when you type / in the middle of a message, not only at the start.",
+  "author": {
+    "name": "Joboy Jordan"
+  },
+  "homepage": "https://github.com/joboyx/my-skills-anywhere",
+  "repository": "https://github.com/joboyx/my-skills-anywhere",
+  "license": "MIT",
+  "keywords": ["skills", "slash-commands", "autocomplete", "typeahead", "mod"]
+}

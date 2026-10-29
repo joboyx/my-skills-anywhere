@@ -1,0 +1,14 @@
+{
+  "name": "my-skills-anywhere",
+  "description": "One Claude Code mod: the slash menu for your own skills, also in the middle of a message.",
+  "owner": {
+    "name": "Joboy Jordan"
+  },
+  "plugins": [
+    {
+      "name": "my-skills-anywhere",
+      "source": "./",
+      "description": "Suggests your own skills and commands when you type / in the middle of a message, not only at the start."
+    }
+  ]
+}
