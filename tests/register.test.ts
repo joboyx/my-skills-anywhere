@@ -78,3 +78,29 @@ test('/notes finds skills whose name has a notes part', () => {
   const list = [user('release-notes'), user('meeting-notes'), user('code-review')]
   expect(rankSkills(list, 'notes').map(c => c.name)).toEqual(['meeting-notes', 'release-notes'])
 })
+
+test('/hellowo finds my-hello-world by letters in order', () => {
+  const list = [user('my-hello-world'), user('code-review')]
+  expect(rankSkills(list, 'hellowo').map(c => c.name)).toEqual(['my-hello-world'])
+})
+
+test('a fuzzy match at word starts ranks above a scattered one', () => {
+  const list = [user('recursion'), user('return'), user('release-notes')]
+  expect(rankSkills(list, 'rn').map(c => c.name)).toEqual(['release-notes', 'return', 'recursion'])
+})
+
+test('a query whose letters are not all in the name, in order, matches nothing', () => {
+  const list = [user('release-notes'), user('meeting-notes'), user('code-review')]
+  expect(rankSkills(list, 'xyz')).toEqual([])
+  expect(rankSkills(list, 'notesr')).toEqual([])
+})
+
+test('a description match ranks after a weak fuzzy name match', () => {
+  const list = [user('notes', 'create a note'), user('recursion')]
+  expect(rankSkills(list, 'cr').map(c => c.name)).toEqual(['recursion', 'notes'])
+})
+
+test('a whole-name prefix ranks above a later name-part prefix', () => {
+  const list = [user('code-review'), user('review-checklist')]
+  expect(rankSkills(list, 'rev').map(c => c.name)).toEqual(['review-checklist', 'code-review'])
+})
