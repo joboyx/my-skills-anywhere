@@ -32,7 +32,7 @@ const BOUNDARY_CHARS = '-_:/. '
 function fuzzyScore(text: string, query: string): number | undefined {
   const n = text.length
   const bonus = Array.from({ length: n }, (_, i) =>
-    i === 0 ? BONUS_START : BOUNDARY_CHARS.includes(text[i - 1]) ? BONUS_BOUNDARY : 0,
+    i === 0 ? BONUS_START : BOUNDARY_CHARS.includes(text.charAt(i - 1)) ? BONUS_BOUNDARY : 0,
   )
 
   // prev[i]: best score with the previous query letter matched at i;
@@ -44,30 +44,33 @@ function fuzzyScore(text: string, query: string): number | undefined {
     const curRun = new Array<number>(n).fill(0)
     let bestGapBase = -Infinity // max of prev[k] - k * GAP_EXTENSION over k <= i - 2
     for (let i = 0; i < n; i++) {
-      if (j > 0 && i >= 2) bestGapBase = Math.max(bestGapBase, prev[i - 2] - (i - 2) * GAP_EXTENSION)
-      if (text[i] !== query[j]) continue
+      if (j > 0 && i >= 2) bestGapBase = Math.max(bestGapBase, (prev[i - 2] ?? -Infinity) - (i - 2) * GAP_EXTENSION)
+      if (text.charAt(i) !== query.charAt(j)) continue
 
+      const b = bonus[i] ?? 0
       if (j === 0) {
-        cur[i] = SCORE_MATCH + bonus[i] * FIRST_CHAR_MULTIPLIER
-        curRun[i] = bonus[i]
+        cur[i] = SCORE_MATCH + b * FIRST_CHAR_MULTIPLIER
+        curRun[i] = b
         continue
       }
 
       // Skipping the i - k - 1 letters between k and i costs
       // GAP_START + (i - k - 2) * GAP_EXTENSION.
-      const gap = bestGapBase + GAP_START + (i - 2) * GAP_EXTENSION + SCORE_MATCH + bonus[i]
+      const gap = bestGapBase + GAP_START + (i - 2) * GAP_EXTENSION + SCORE_MATCH + b
+      const before = prev[i - 1] ?? -Infinity
+      const beforeRun = prevRun[i - 1] ?? 0
       let consecutive = -Infinity
       let run = 0
-      if (i >= 1 && prev[i - 1] > -Infinity) {
-        run = bonus[i] >= BONUS_BOUNDARY && bonus[i] > prevRun[i - 1] ? bonus[i] : prevRun[i - 1]
-        consecutive = prev[i - 1] + SCORE_MATCH + Math.max(bonus[i], run, BONUS_CONSECUTIVE)
+      if (before > -Infinity) {
+        run = b >= BONUS_BOUNDARY && b > beforeRun ? b : beforeRun
+        consecutive = before + SCORE_MATCH + Math.max(b, run, BONUS_CONSECUTIVE)
       }
       if (consecutive >= gap) {
         cur[i] = consecutive
         curRun[i] = run
       } else {
         cur[i] = gap
-        curRun[i] = bonus[i]
+        curRun[i] = b
       }
     }
     prev = cur
@@ -108,13 +111,15 @@ export function rankSkills(commands: readonly CommandInfo[], query: string): Com
 }
 
 /**
- * Adds the person's own skills to the typeahead for a `/token` typed after
- * other text; at the start of the input the native slash menu already shows
- * them, so the hook passes through there.
+ * Adds the person's own skills to the typeahead for a `/token` when other
+ * text comes before or after it; when the token is the whole input the native
+ * slash menu already shows them, so the hook passes through there.
  */
 export const register: Register = on => {
   on('prompt.autocomplete', { token: /^\// }, async ($, e, next) => {
-    if (e.text.slice(0, e.start).trim() === '') return next(e)
+    const before = e.text.slice(0, e.start)
+    const after = e.text.slice(e.start + e.token.length)
+    if (before.trim() === '' && after.trim() === '') return next(e)
 
     const skills = rankSkills(await $.command.list(), e.token.slice(1))
     const rows = skills.map(c => ({

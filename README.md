@@ -41,7 +41,7 @@ If you want a fix in Claude Code itself, add a 👍 to [#95268](https://github.c
 - **Tab replaces only the token.** Tab puts the first row in place of the `/…` word you typed. The text around it stays.
 - **Your own skills only.** The menu lists skills and commands from `~/.claude/skills`, `~/.claude/commands` and the project's `.claude/skills`. Built-in commands such as `/compact` do nothing in the middle of a message, so the menu leaves them out.
 - **Skills with `disable-model-invocation: true` are listed too.** They run when you type them yourself, but not when you paste them.
-- **No duplicate rows.** At the start of the input, the native menu already lists your skills, so the mod adds nothing there.
+- **No duplicate rows.** When the `/…` word is the whole input, the native menu already lists your skills, so the mod adds nothing there. When you type `/` at the start of a prompt that already holds other text, the native menu shows nothing, so the mod shows its menu.
 - **Survives Claude Code updates.** The mod uses the public mod API (the `prompt.autocomplete` hook and `$.command.list()`). It does not patch the Claude Code binary.
 
 ## Limits

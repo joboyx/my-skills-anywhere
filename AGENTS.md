@@ -1,6 +1,6 @@
 # AGENTS.md
 
-`my-skills-anywhere` is a Claude Code mod. When the person types `/` in the middle of a message, it adds their own skills and commands to the prompt typeahead. At the start of the input it does nothing, because the native slash menu works there.
+`my-skills-anywhere` is a Claude Code mod. When the person types `/` in the middle of a message, it adds their own skills and commands to the prompt typeahead. When the `/` token is the whole input it does nothing, because the native slash menu works there. A `/` token at the start of a prompt that already holds other text gets the menu too.
 The plugin lives at the repo root. User docs are in `README.md`.
 
 ## Layout
@@ -36,7 +36,7 @@ After a code change in a running session, run `/reload-plugins`, or restart `cla
 
 ## Behaviour
 
-- The hook matches a token that starts with `/`. When only whitespace comes before the token, it returns `next(e)` unchanged.
+- The hook matches a token that starts with `/`. When only whitespace comes before and after the token (the token is the whole input), it returns `next(e)` unchanged, because the native menu handles it. A `/` token at the start of a prompt that already holds other text gets the rows too.
 - It lists commands from `$.command.list()` with `source === 'user'`: skills and commands from `~/.claude/skills`, `~/.claude/commands` and the project's `.claude/skills`.
 - Rank: fuzzy match on the name: the query letters appear in order (case-insensitive), and other letters can come between them. A name that starts with the query ranks highest. Letters at a name-part start (after `-`, `_`, `:`, `/`, `.` or a space) and runs of letters rank higher, so `/hellowo` finds `my-hello-world`. Ties sort by shorter name, then by name. Descriptions match as plain text and rank after every name match. At most `MAX_ROWS` (8) rows.
 - Each row is `{ text: '/<name> ', label: '/<name>', description }`. The rows go after the rows of other plugins.

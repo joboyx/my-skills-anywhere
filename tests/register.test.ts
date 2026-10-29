@@ -24,6 +24,14 @@ function box(draft: string): PromptAutocompleteInput {
 }
 
 /**
+ * The prompt box with `token` typed at the start of the input and the caret
+ * at its end, the existing text `rest` after it.
+ */
+function boxBefore(token: string, rest: string): PromptAutocompleteInput {
+  return { text: `${token}${rest}`, cursor: token.length, token, start: 0 }
+}
+
+/**
  * `prompt.autocomplete` is not on the typed test `$`, so the test reaches
  * the engine's call by name.
  */
@@ -72,6 +80,20 @@ test('a slash at the start of the input is left to the native menu', async ($, o
   const result = await ($ as unknown as Autocomplete).prompt.autocomplete(box('  /disc'))
 
   expect(result.suggestions).toEqual([])
+})
+
+test('a slash at the start of a prompt that already holds text adds the skill rows', async ($, on) => {
+  on('command.list', () => ({ value: COMMANDS }))
+  on('prompt.autocomplete', () => ({ suggestions: [{ text: 'other' }] }))
+
+  const result = await ($ as unknown as Autocomplete).prompt.autocomplete(boxBefore('/disc', ' fix the flaky test'))
+
+  expect(result.suggestions[0]).toEqual({ text: 'other' })
+  expect(result.suggestions[1]).toEqual({
+    text: '/design-discuss ',
+    label: '/design-discuss',
+    description: 'Talk a design through before coding',
+  })
 })
 
 test('/notes finds skills whose name has a notes part', () => {
