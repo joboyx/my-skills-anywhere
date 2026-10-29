@@ -1,7 +1,7 @@
 {
   "name": "my-skills-anywhere",
   "displayName": "Skills anywhere",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Suggests your own skills and commands when you type / in the middle of a message, not only at the start.",
   "author": {
     "name": "Joboy Jordan"
