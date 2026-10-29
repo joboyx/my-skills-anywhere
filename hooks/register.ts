@@ -5,29 +5,87 @@ import type { CommandInfo, Register } from 'claude-code'
  */
 export const MAX_ROWS = 8
 
+// Fuzzy score constants, the same as fzf's.
+const SCORE_MATCH = 16
+const GAP_START = -3
+const GAP_EXTENSION = -1
+const BONUS_BOUNDARY = 8
+// fzf's start-of-text bonus, so a whole-name prefix beats a later name-part prefix.
+const BONUS_START = BONUS_BOUNDARY + 2
+const BONUS_CONSECUTIVE = 4
+const FIRST_CHAR_MULTIPLIER = 2
+const BOUNDARY_CHARS = '-_:/. '
+
 /**
- * Returns how well a command name or description matches the query: lower is
- * better, `undefined` is no match.
+ * Returns the fzf-style fuzzy score of `query` against `text`: higher is
+ * better, `undefined` when the query letters do not all appear in order.
  *
- * 0 exact name, 1 name prefix, 2 prefix of a name part split on `-`, `_` or
- * `:`, 3 name substring, 4 description substring.
+ * Each matched letter scores `SCORE_MATCH`. A letter at index 0 gets
+ * `BONUS_START`; a letter after a `-`, `_`, `:`, `/`, `.` or space gets
+ * `BONUS_BOUNDARY`. The first query letter gets its bonus doubled. A run of
+ * consecutive letters gets at least `BONUS_CONSECUTIVE` per letter and keeps
+ * the bonus of its first letter.
+ * A gap between matched letters costs `GAP_START`, plus `GAP_EXTENSION` for
+ * each further skipped letter. A dynamic program picks the best alignment,
+ * not the leftmost one.
  */
-function tierOf(command: CommandInfo, query: string): number | undefined {
-  const name = command.name.toLowerCase()
-  if (name === query) return 0
-  if (name.startsWith(query)) return 1
-  if (name.split(/[-_:]/).some(part => part.startsWith(query))) return 2
-  if (name.includes(query)) return 3
-  if (command.description.toLowerCase().includes(query)) return 4
-  return undefined
+function fuzzyScore(text: string, query: string): number | undefined {
+  const n = text.length
+  const bonus = Array.from({ length: n }, (_, i) =>
+    i === 0 ? BONUS_START : BOUNDARY_CHARS.includes(text[i - 1]) ? BONUS_BOUNDARY : 0,
+  )
+
+  // prev[i]: best score with the previous query letter matched at i;
+  // prevRun[i]: the bonus of the first letter of the run that ends at i.
+  let prev: number[] = []
+  let prevRun: number[] = []
+  for (let j = 0; j < query.length; j++) {
+    const cur = new Array<number>(n).fill(-Infinity)
+    const curRun = new Array<number>(n).fill(0)
+    let bestGapBase = -Infinity // max of prev[k] - k * GAP_EXTENSION over k <= i - 2
+    for (let i = 0; i < n; i++) {
+      if (j > 0 && i >= 2) bestGapBase = Math.max(bestGapBase, prev[i - 2] - (i - 2) * GAP_EXTENSION)
+      if (text[i] !== query[j]) continue
+
+      if (j === 0) {
+        cur[i] = SCORE_MATCH + bonus[i] * FIRST_CHAR_MULTIPLIER
+        curRun[i] = bonus[i]
+        continue
+      }
+
+      // Skipping the i - k - 1 letters between k and i costs
+      // GAP_START + (i - k - 2) * GAP_EXTENSION.
+      const gap = bestGapBase + GAP_START + (i - 2) * GAP_EXTENSION + SCORE_MATCH + bonus[i]
+      let consecutive = -Infinity
+      let run = 0
+      if (i >= 1 && prev[i - 1] > -Infinity) {
+        run = bonus[i] >= BONUS_BOUNDARY && bonus[i] > prevRun[i - 1] ? bonus[i] : prevRun[i - 1]
+        consecutive = prev[i - 1] + SCORE_MATCH + Math.max(bonus[i], run, BONUS_CONSECUTIVE)
+      }
+      if (consecutive >= gap) {
+        cur[i] = consecutive
+        curRun[i] = run
+      } else {
+        cur[i] = gap
+        curRun[i] = bonus[i]
+      }
+    }
+    prev = cur
+    prevRun = curRun
+  }
+
+  const best = Math.max(...prev)
+  return best > -Infinity ? best : undefined
 }
 
 /**
  * Picks the person's own commands (source `user`: user and project skills)
  * that match the query, best first, at most `MAX_ROWS`.
  *
- * Order: match tier, then shorter name, then name. An empty query lists them
- * by name.
+ * Names match fuzzily (query letters in order, case-insensitive): higher
+ * score first, then shorter name, then name. Commands whose description holds
+ * the query as plain text come after every name match, by shorter name, then
+ * name. An empty query lists them by name.
  */
 export function rankSkills(commands: readonly CommandInfo[], query: string): CommandInfo[] {
   const q = query.toLowerCase()
@@ -35,17 +93,18 @@ export function rankSkills(commands: readonly CommandInfo[], query: string): Com
   if (q === '') {
     return own.sort((a, b) => a.name.localeCompare(b.name)).slice(0, MAX_ROWS)
   }
-  return own
-    .map(command => ({ command, tier: tierOf(command, q) }))
-    .filter((m): m is { command: CommandInfo; tier: number } => m.tier !== undefined)
-    .sort(
-      (a, b) =>
-        a.tier - b.tier ||
-        a.command.name.length - b.command.name.length ||
-        a.command.name.localeCompare(b.command.name),
-    )
-    .slice(0, MAX_ROWS)
-    .map(m => m.command)
+  const byName = (a: CommandInfo, b: CommandInfo) => a.name.length - b.name.length || a.name.localeCompare(b.name)
+
+  const nameMatches: { command: CommandInfo; score: number }[] = []
+  const descriptionMatches: CommandInfo[] = []
+  for (const command of own) {
+    const score = fuzzyScore(command.name.toLowerCase(), q)
+    if (score !== undefined) nameMatches.push({ command, score })
+    else if (command.description.toLowerCase().includes(q)) descriptionMatches.push(command)
+  }
+  nameMatches.sort((a, b) => b.score - a.score || byName(a.command, b.command))
+  descriptionMatches.sort(byName)
+  return [...nameMatches.map(m => m.command), ...descriptionMatches].slice(0, MAX_ROWS)
 }
 
 /**

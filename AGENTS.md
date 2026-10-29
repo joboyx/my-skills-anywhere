@@ -38,7 +38,7 @@ After a code change in a running session, run `/reload-plugins`, or restart `cla
 
 - The hook matches a token that starts with `/`. When only whitespace comes before the token, it returns `next(e)` unchanged.
 - It lists commands from `$.command.list()` with `source === 'user'`: skills and commands from `~/.claude/skills`, `~/.claude/commands` and the project's `.claude/skills`.
-- Rank: exact name, name prefix, prefix of a name part split on `-`, `_` or `:`, name substring, description substring. Ties sort by shorter name, then by name. At most `MAX_ROWS` (8) rows.
+- Rank: fuzzy match on the name: the query letters appear in order (case-insensitive), and other letters can come between them. A name that starts with the query ranks highest. Letters at a name-part start (after `-`, `_`, `:`, `/`, `.` or a space) and runs of letters rank higher, so `/hellowo` finds `my-hello-world`. Ties sort by shorter name, then by name. Descriptions match as plain text and rank after every name match. At most `MAX_ROWS` (8) rows.
 - Each row is `{ text: '/<name> ', label: '/<name>', description }`. The rows go after the rows of other plugins.
 - Plugin skills are left out: `source: 'plugin'` holds both plugin skills and plugin commands, and a plugin command does nothing in the middle of a message.
 

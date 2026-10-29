@@ -37,7 +37,7 @@ If you want a fix in Claude Code itself, add a 👍 to [#95268](https://github.c
 ## Features
 
 - **Menu in the middle of a message.** Type `/` after any other text and your skills show in a menu above the prompt.
-- **Loose matching.** The menu ranks an exact name first, then a name that starts with the text, then a name part (split on `-`, `_` or `:`) that starts with it, then a name that holds it, then a description that holds it. So `/notes` finds `release-notes` and `meeting-notes`. The menu shows at most 8 rows.
+- **Loose matching.** The letters you type must appear in the name in the same order. Other letters can come between them. A name that starts with the text ranks first. Letters at the start of a name part (after `-`, `_`, `:`, `/`, `.` or a space) and letters in a run rank higher. So `/hellowo` finds `my-hello-world`, and `/notes` finds `release-notes` and `meeting-notes`. A description that holds the text matches too, after all name matches. The menu shows at most 8 rows.
 - **Tab replaces only the token.** Tab puts the first row in place of the `/…` word you typed. The text around it stays.
 - **Your own skills only.** The menu lists skills and commands from `~/.claude/skills`, `~/.claude/commands` and the project's `.claude/skills`. Built-in commands such as `/compact` do nothing in the middle of a message, so the menu leaves them out.
 - **Skills with `disable-model-invocation: true` are listed too.** They run when you type them yourself, but not when you paste them.
